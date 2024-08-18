@@ -1,0 +1,24 @@
+type Api {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input CreateApiInput {
+  # Example field (placeholder)
+  exampleField: Int
+}
+
+input UpdateApiInput {
+  id: Int!
+}
+
+type Query {
+  api: [Api]!
+  api(id: Int!): Api
+}
+
+type Mutation {
+  createApi(createApiInput: CreateApiInput!): Api!
+  updateApi(updateApiInput: UpdateApiInput!): Api!
+  removeApi(id: Int!): Api
+}
