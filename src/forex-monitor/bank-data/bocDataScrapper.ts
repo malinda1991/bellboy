@@ -27,7 +27,7 @@ export class BocDataScrapper {
   private scrapLocation: string;
   private webExtractor: Puppeteer;
   private scrapedForexData: ForexCurrencyValue;
-  private filteredForexData: ForexCurrencyValue;
+  private essentialForexData: ForexCurrencyValue;
   private htmlParser: NodeHtmlParser;
   private bankSiteLastUpdatedDateTime: string;
 
@@ -38,7 +38,7 @@ export class BocDataScrapper {
       timeout: 90000,
     });
     this.scrapedForexData = {};
-    this.filteredForexData = {};
+    this.essentialForexData = {};
     this.htmlParser = new NodeHtmlParser();
   }
 
@@ -52,7 +52,7 @@ export class BocDataScrapper {
     console.log('Bank site was last updated at ', this.getLastUpdatedTime());
     if (Object.keys(this.scrapedForexData).length > 0) {
       console.log('Full forex dataset', this.scrapedForexData);
-      console.log('Filtered dataset', this.filteredForexData);
+      console.log('Essential dataset', this.essentialForexData);
     } else {
       console.log('No data were extracted');
     }
@@ -154,11 +154,17 @@ export class BocDataScrapper {
 
       const currencyCode = currencyCell.textContent.trim();
 
-      this.scrapedForexData[currencyCode] = {
+      const forexData = {
         buyingRate: formatCellValuetoFloat(buyingRateCell),
         sellingRate: formatCellValuetoFloat(sellingRateCell),
         ...maxMinRates,
       };
+      this.scrapedForexData[currencyCode] = forexData;
+
+      if (currencyCode in ForexCurrency) {
+        // this currency is an essential
+        this.essentialForexData[currencyCode] = forexData;
+      }
     });
   };
 
