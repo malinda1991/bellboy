@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ForexCurrency, ForexScrapLocations, Bank } from '../config';
+import { ForexCurrency, ForexScrapLocations, Bank } from '../types';
 import { Puppeteer, NodeHtmlParser, Luxon } from '@common';
 import type { HTMLElement, DateTimeMaybeValid } from '@common';
 
