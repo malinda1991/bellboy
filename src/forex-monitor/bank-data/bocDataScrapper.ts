@@ -210,6 +210,12 @@ export class BocDataScrapper {
     }
   };
 
+  /**
+   * Runs the BOC data scrap operations
+   *
+   * @author Sandun Munasinghe
+   * @since 21/8/2024
+   */
   public runScrapper = async (): Promise<void> => {
     await this.extractForexData();
     await this.extractLastUpdatedDateTime();
