@@ -2,27 +2,25 @@ import puppeteer from 'puppeteer';
 
 type PuppeteerParams = {
   url: string;
-  querySelector: string;
+  // querySelector: string;
   timeout?: number;
 };
 
 export class Puppeteer {
   private url: string;
-  private querySelector: string;
   private extractedHtmlData: string[];
   private timeout: number;
 
-  public constructor({ url, querySelector, timeout }: PuppeteerParams) {
+  public constructor({ url, timeout }: PuppeteerParams) {
     this.url = url;
-    this.querySelector = querySelector;
     this.timeout = timeout || 30000;
   }
 
   public getExtractedHtmlData = (): string[] => {
-    return this.extractedHtmlData;
+    return [...this.extractedHtmlData]; // returns a shallow copy instead of a reference pointer
   };
 
-  public runExtraction = async (): Promise<void> => {
+  public runExtraction = async (querySelectorParam: string): Promise<void> => {
     console.log('Begining extraction from ', this.url);
     const browser = await puppeteer.launch();
     try {
@@ -41,7 +39,7 @@ export class Puppeteer {
           );
         },
         {
-          querySelector: this.querySelector,
+          querySelector: querySelectorParam,
         },
       );
     } catch (error) {

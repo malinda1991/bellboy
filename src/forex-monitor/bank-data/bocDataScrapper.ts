@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import { ForexCurrency, ForexScrapLocations, Bank } from '../config';
-import { Puppeteer, NodeHtmlParser } from '@common';
-import type { HTMLElement } from '@common';
+import { Puppeteer, NodeHtmlParser, Luxon } from '@common';
+import type { HTMLElement, DateTimeMaybeValid } from '@common';
 
 type ForexCurrencyRateData = {
   buyingRate: number;
@@ -13,34 +14,88 @@ type ForexCurrencyValue = {
   [key in ForexCurrency]?: ForexCurrencyRateData;
 };
 
+/**
+ * Scrapes the current exchange rates from the Bank of Ceylon website.
+ *
+ * @author Sandun Munasinghe
+ * @since 19/08/2024
+ *
+ */
+@Injectable()
 export class BocDataScrapper {
-  private bank: Bank;
+  public static bank: Bank = Bank.BOC;
   private scrapLocation: string;
   private webExtractor: Puppeteer;
   private scrapedForexData: ForexCurrencyValue;
+  private filteredForexData: ForexCurrencyValue;
   private htmlParser: NodeHtmlParser;
+  private bankSiteLastUpdatedDateTime: string;
 
   public constructor() {
-    this.bank = Bank.BOC;
     this.scrapLocation = ForexScrapLocations.BOC;
     this.webExtractor = new Puppeteer({
       url: this.scrapLocation,
-      querySelector: '#exchange-rates tbody tr',
       timeout: 90000,
     });
     this.scrapedForexData = {};
+    this.filteredForexData = {};
     this.htmlParser = new NodeHtmlParser();
   }
 
+  /**
+   * Prints the scrapped forex data in the console
+   *
+   * @author Sandun Munasinghe
+   * @since 19/08/2024
+   */
   private printScrappedData = (): void => {
+    console.log('Bank site was last updated at ', this.getLastUpdatedTime());
     if (Object.keys(this.scrapedForexData).length > 0) {
-      console.log(this.scrapedForexData);
+      console.log('Full forex dataset', this.scrapedForexData);
+      console.log('Filtered dataset', this.filteredForexData);
     } else {
       console.log('No data were extracted');
     }
   };
 
-  public runScrapper = async () => {
+  /**
+   * Extracts last updated date time text from the web page,
+   * formats the datetime string
+   * and assigns it to bankSiteLastUpdatedDateTime private property
+   *
+   * @author Sandun Munasinghe
+   * @since 21/08/2024
+   *
+   * @returns Promise<void>
+   */
+  private extractLastUpdatedDateTime = async (): Promise<void> => {
+    const filterDateText = (dateText: string): string => {
+      return dateText.substring(1);
+    };
+    await this.webExtractor.runExtraction('#exchange-rates thead tr');
+
+    const extractedHtmlData = this.webExtractor.getExtractedHtmlData();
+
+    const firstRow = extractedHtmlData[0];
+    const lastUpdatedDateTimeElement = this.htmlParser
+      .parseHtml(firstRow)
+      .getElementsByTagName('b');
+
+    this.bankSiteLastUpdatedDateTime = filterDateText(
+      lastUpdatedDateTimeElement[1].innerText,
+    );
+  };
+
+  /**
+   * Extracts the html table body rows from the web page, formats the forex data and
+   * assigns the result to scrapedForexData private property
+   *
+   * @author Sandun Munasinghe
+   * @since 19/08/2024
+   *
+   * @returns Promise<void>
+   */
+  private extractForexData = async (): Promise<void> => {
     const formatCellValuetoFloat = (cell: HTMLElement) => {
       let cellText = cell.textContent;
       if (cellText && cellText !== '-') {
@@ -83,7 +138,7 @@ export class BocDataScrapper {
       };
     };
 
-    await this.webExtractor.runExtraction();
+    await this.webExtractor.runExtraction('#exchange-rates tbody tr');
 
     const extractedHtmlData = this.webExtractor.getExtractedHtmlData();
 
@@ -105,7 +160,59 @@ export class BocDataScrapper {
         ...maxMinRates,
       };
     });
+  };
 
+  /**
+   * Get the forex data was last updated time figure in the website
+   *
+   * @param asObject set this as true if you want the last updated date time as a Luxon DateTimeMaybeValid object
+   *
+   * @returns DateTimeMaybeValid object if asObject parameter is set to true,
+   * else returns just the string of the date time text extracted from the site
+   */
+  public getLastUpdatedTime = (
+    asObject = false,
+  ): DateTimeMaybeValid | string => {
+    if (!this.bankSiteLastUpdatedDateTime) {
+      throw new Error('last updated was not recorded');
+    }
+    if (asObject) {
+      const dateTime = this.bankSiteLastUpdatedDateTime;
+      const splitDateTime = dateTime.split(' ');
+      const dateValues = splitDateTime[0].split('.');
+      const timeValues = splitDateTime[1].split(':');
+      const amPmValue = splitDateTime[2];
+
+      const hour = ((): number => {
+        if (amPmValue === 'PM' && timeValues[0] !== '12') {
+          // PM time hours
+          return parseInt(timeValues[0]) + 12;
+        } else {
+          // AM time hours
+          if (timeValues[0] === '12') {
+            return 0;
+          }
+          return parseInt(timeValues[0]);
+        }
+      })();
+
+      return Luxon.fromObject({
+        year: parseInt(dateValues[2]),
+        month: parseInt(dateValues[1]),
+        day: parseInt(dateValues[0]),
+        hour,
+        minute: parseInt(timeValues[1]),
+        second: parseInt(timeValues[2]),
+      });
+    } else {
+      // return as same
+      return this.bankSiteLastUpdatedDateTime;
+    }
+  };
+
+  public runScrapper = async (): Promise<void> => {
+    await this.extractForexData();
+    await this.extractLastUpdatedDateTime();
     this.printScrappedData();
   };
 }
