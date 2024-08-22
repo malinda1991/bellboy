@@ -6,6 +6,7 @@ import type {
   DateTimeMaybeValid,
   ForexCurrencyValue,
 } from '@common';
+import { BankScrapper } from './bankScrapper.interface';
 
 /**
  * Scrapes the current exchange rates from the Bank of Ceylon website.
@@ -15,7 +16,7 @@ import type {
  *
  */
 @Injectable()
-export class BocDataScrapper {
+export class BocDataScrapper implements BankScrapper {
   public static bank: Bank = Bank.BOC;
   private scrapLocation: string;
   private webExtractor: Puppeteer;
@@ -216,6 +217,7 @@ export class BocDataScrapper {
    * @since 21/8/2024
    */
   public runScrapper = async (): Promise<void> => {
+    console.log('BOC scrapper running');
     await this.extractForexData();
     await this.extractLastUpdatedDateTime();
     this.printScrappedData();

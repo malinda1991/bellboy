@@ -7,6 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(3000);
 
-  AppService.runScrapper();
+  const appService = app.get(AppService);
+  appService.runForexScrapper();
 }
 bootstrap();
