@@ -31,6 +31,7 @@
     "luxon": "^3.5.0",
     "mongoose": "^8.5.3",
     "node-html-parser": "^6.1.13",
+    "pdfreader": "^3.0.5",
     "puppeteer": "^23.1.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
