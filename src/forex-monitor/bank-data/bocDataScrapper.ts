@@ -1,18 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ForexCurrency, ForexScrapLocations, Bank } from '../types';
-import { Puppeteer, NodeHtmlParser, Luxon } from '@common';
-import type { HTMLElement, DateTimeMaybeValid } from '@common';
-
-type ForexCurrencyRateData = {
-  buyingRate: number;
-  sellingRate: number;
-  maxRate: number;
-  minRate: number;
-};
-
-type ForexCurrencyValue = {
-  [key in ForexCurrency]?: ForexCurrencyRateData;
-};
+import { ForexScrapLocations, Bank } from '../types';
+import { Puppeteer, NodeHtmlParser, Luxon, ForexCurrency } from '@common';
+import type {
+  HTMLElement,
+  DateTimeMaybeValid,
+  ForexCurrencyValue,
+} from '@common';
 
 /**
  * Scrapes the current exchange rates from the Bank of Ceylon website.

@@ -1,2 +1,3 @@
-export { Puppeteer } from './puppeteer';
-export { NodeHtmlParser, HTMLElement } from './nodeHtmlParser';
+export * from './puppeteer';
+export * from './nodeHtmlParser';
+export * from './axios';

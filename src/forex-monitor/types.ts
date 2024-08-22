@@ -1,14 +1,4 @@
-export enum ForexCurrency {
-  USD = 'USD',
-  GBP = 'GBP',
-  EUR = 'EUR',
-  AUD = 'AUD',
-  CAD = 'CAD',
-  AED = 'AED',
-  NZD = 'NZD',
-  SEK = 'SEK',
-  NOK = 'NOK',
-}
+import { ForexCurrency } from '@common';
 
 export enum Bank {
   BOC = 'BOC',
@@ -42,4 +32,5 @@ export const ForexCurrencyName: CurrencyName = {
 };
 export const ForexScrapLocations: ScrapLocations = {
   BOC: 'https://www.boc.lk/rates-tariff',
+  HSBC: 'https://www.hsbc.lk/content/dam/hsbc/lk/documents/tariffs/foreign-exchange-rates.pdf',
 };
