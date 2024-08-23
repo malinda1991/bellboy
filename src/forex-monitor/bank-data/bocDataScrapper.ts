@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { ForexScrapLocations, Bank } from '../types';
 import { Puppeteer, NodeHtmlParser, Luxon, ForexCurrency } from '@common';
 import type {
@@ -7,6 +9,9 @@ import type {
   ForexCurrencyValue,
 } from '@common';
 import { BankScrapper } from './bankScrapper.interface';
+
+import { CreateForexDataDto } from '../dto/forexData.dto';
+import { ForexData } from '../schema/forexData.schema';
 
 /**
  * Scrapes the current exchange rates from the Bank of Ceylon website.
@@ -25,7 +30,11 @@ export class BocDataScrapper implements BankScrapper {
   private htmlParser: NodeHtmlParser;
   private bankSiteLastUpdatedDateTime: string;
 
-  public constructor() {
+  public constructor(
+    @InjectModel(ForexData.name)
+    private readonly forexDataModel: Model<ForexData>,
+  ) {
+    console.log('------forexDataModel-----', forexDataModel);
     this.scrapLocation = ForexScrapLocations.BOC;
     this.webExtractor = new Puppeteer({
       url: this.scrapLocation,
@@ -162,6 +171,24 @@ export class BocDataScrapper implements BankScrapper {
     });
   };
 
+  private saveDataInDb = async (): Promise<void> => {
+    const dto: CreateForexDataDto = {
+      bank: Bank.BOC,
+      forex: this.essentialForexData,
+      lastUpdatedDateTime: this.bankSiteLastUpdatedDateTime,
+    };
+
+    try {
+      console.log('Saving Boc forex Data');
+      const createForexData = new this.forexDataModel(dto);
+      await createForexData.save();
+      console.log('Boc data Saved');
+    } catch (error) {
+      console.log('Error when saving boc data');
+      throw error;
+    }
+  };
+
   /**
    * Get the forex data was last updated time figure in the website
    *
@@ -220,6 +247,7 @@ export class BocDataScrapper implements BankScrapper {
     console.log('BOC scrapper running');
     await this.extractForexData();
     await this.extractLastUpdatedDateTime();
+    await this.saveDataInDb();
     this.printScrappedData();
   };
 }
